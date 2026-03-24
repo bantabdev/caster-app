@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f172a" id="metaTheme" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="CASTER" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>CASTER</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body.light {
+      --bg:           #0f172a;
+      --bg2:          #1e2d4a;
+      --card:         #162040;
+      --border:       #2a3f6a;
+      --catcher-a:    #e8c96a;
+      --catcher-b:    #c9a84c;
+      --catcher-c:    #a87c28;
+      --catcher-d:    #f5dfa0;
+      --text:         #f1f5f9;
+      --subtext:      #94a3b8;
+      --accent:       #c9a84c;
+      --accent2:      #e8c96a;
+      --inner-bg:     #1e2d4a;
+      --popup-bg:     #162040;
+      --input-bg:     #1a2a45;
+      --input-border: #2a3f6a;
+      --penalty-card:   #1a1030;
+      --penalty-border: #3d2060;
+      --penalty-accent: #b07efc;
+    }
+    body.dark {
+      --bg:           #000000;
+      --bg2:          #111111;
+      --card:         #1a1a1a;
+      --border:       #2a2a2a;
+      --catcher-a:    #9ca3af;
+      --catcher-b:    #6b7280;
+      --catcher-c:    #4b5563;
+      --catcher-d:    #d1d5db;
+      --text:         #e5e7eb;
+      --subtext:      #9ca3af;
+      --accent:       #9ca3af;
+      --accent2:      #d1d5db;
+      --inner-bg:     #111111;
+      --popup-bg:     #1a1a1a;
+      --input-bg:     #111111;
+      --input-border: #2a2a2a;
+      --penalty-card:   #0a0a0a;
+      --penalty-border: #333333;
+      --penalty-accent: #a0a0b0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: background 0.35s, color 0.35s;
+      overflow-x: hidden;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      width: 100%;
+      max-width: 480px;
+      display: grid;
+      grid-template-columns: 80px 1fr 80px;
+      align-items: center;
+      padding: 16px 16px 0;
+    }
+    .app-title {
+      font-size: 1.9rem;
+      font-weight: 900;
+      letter-spacing: 6px;
+      color: var(--accent2);
+      text-transform: uppercase;
+      text-shadow: 0 0 24px rgba(201,168,76,0.45);
+      transition: color 0.35s, text-shadow 0.35s;
+      text-align: center;
+    }
+    body.dark .app-title { text-shadow: 0 0 16px rgba(156,163,175,0.3); }
+
+    /* ── THEME TOGGLE ── */
+    .theme-toggle-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+    .toggle-label { font-size: 0.55rem; font-weight: 700; letter-spacing: 1px; color: var(--subtext); text-transform: uppercase; }
+    .toggle-switch { position: relative; width: 46px; height: 24px; cursor: pointer; }
+    .toggle-switch input { display: none; }
+    .toggle-track { position: absolute; inset: 0; border-radius: 24px; background: var(--border); transition: background 0.3s; }
+    .toggle-switch input:checked + .toggle-track { background: var(--catcher-c); }
+    .toggle-thumb { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent2); transition: transform 0.3s; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+    .toggle-switch input:checked ~ .toggle-thumb { transform: translateX(22px); }
+
+    /* ── SCREENS ── */
+    .screen { width: 100%; max-width: 480px; padding: 16px 16px 32px; display: none; flex-direction: column; align-items: center; }
+    .screen.active { display: flex; }
+
+    /* ── SETUP ── */
+    .setup-intro { text-align: center; margin: 14px 0 18px; }
+    .setup-intro h2 { font-size: 1.1rem; font-weight: 700; color: var(--accent2); margin-bottom: 6px; }
+    .setup-intro p { font-size: 0.82rem; color: var(--subtext); line-height: 1.5; }
+
+    .section-heading {
+      width: 100%;
+      font-size: 0.72rem; font-weight: 800; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-heading::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .slots-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-bottom: 20px; }
+
+    /* penalty */
+    .penalty-section {
+      width: 100%;
+      background: var(--penalty-card);
+      border: 1.5px solid var(--penalty-border);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 20px;
+    }
+    .penalty-heading {
+      font-size: 0.72rem; font-weight: 800; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--penalty-accent);
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .penalty-heading::after { content: ''; flex: 1; height: 1px; background: var(--penalty-border); }
+    .penalty-hint { font-size: 0.75rem; color: var(--subtext); margin-bottom: 12px; line-height: 1.4; }
+    .penalty-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .slot-item { display: flex; flex-direction: column; gap: 5px; }
+    .slot-label { font-size: 0.72rem; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+    .penalty-label { font-size: 0.72rem; font-weight: 700; color: var(--penalty-accent); letter-spacing: 1px; }
+
+    .slot-input {
+      background: var(--input-bg);
+      border: 1.5px solid var(--input-border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.88rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: inherit;
+      width: 100%;
+    }
+    .slot-input::placeholder { color: var(--subtext); opacity: 0.55; font-size: 0.78rem; }
+    .slot-input:focus { border-color: var(--accent); background: var(--bg2); }
+    .slot-input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .penalty-input {
+      background: var(--input-bg);
+      border: 1.5px solid var(--penalty-border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.88rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: inherit;
+      width: 100%;
+    }
+    .penalty-input::placeholder { color: var(--subtext); opacity: 0.55; font-size: 0.78rem; }
+    .penalty-input:focus { border-color: var(--penalty-accent); }
+    .penalty-input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .suggest-hint {
+      font-size: 0.68rem;
+      color: var(--subtext);
+      opacity: 0.75;
+      margin-top: 3px;
+      line-height: 1.3;
+      padding: 3px 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: opacity 0.15s, background 0.15s;
+      user-select: none;
+    }
+    .suggest-hint:hover, .suggest-hint:active {
+      opacity: 1;
+      background: rgba(255,255,255,0.06);
+    }
+    .suggest-hint span { color: var(--accent2); }
+    .suggest-hint.penalty-suggest span { color: var(--penalty-accent); }
+
+    .btn-start {
+      width: 100%; padding: 14px; border-radius: 14px; border: none;
+      background: linear-gradient(135deg, var(--catcher-c), var(--catcher-b));
+      color: #000; font-size: 1rem; font-weight: 800; letter-spacing: 1px;
+      cursor: pointer; transition: opacity 0.2s, transform 0.15s; text-transform: uppercase;
+    }
+    .btn-start:active { transform: scale(0.97); opacity: 0.85; }
+    .btn-start:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ── CATCHER (flat 2D) ── */
+    .catcher-wrap {
+      position: relative;
+      width: min(280px, 85vw);
+      height: min(280px, 85vw);
+      margin: 20px auto 10px;
+      filter: drop-shadow(0 8px 22px rgba(0,0,0,0.45));
+    }
+    .catcher { position: absolute; inset: 0; }
+
+    .flap {
+      position: absolute; width: 50%; height: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; user-select: none; transition: filter 0.2s;
+    }
+    .flap-tl { top:0; left:0;   clip-path: polygon(0 0,100% 0,50% 50%,0 100%);
+      background: linear-gradient(140deg, var(--catcher-d), var(--catcher-b)); }
+    .flap-tr { top:0; right:0;  clip-path: polygon(0 0,100% 0,100% 100%,50% 50%);
+      background: linear-gradient(220deg, var(--catcher-d), var(--catcher-c)); }
+    .flap-bl { bottom:0; left:0;  clip-path: polygon(0 0,50% 50%,100% 100%,0 100%);
+      background: linear-gradient(50deg, var(--catcher-d), var(--catcher-c)); }
+    .flap-br { bottom:0; right:0; clip-path: polygon(50% 50%,100% 0,100% 100%,0 100%);
+      background: linear-gradient(320deg, var(--catcher-d), var(--catcher-b)); }
+    .flap:active { filter: brightness(1.25); }
+
+    .flap-num {
+      font-size: 1.55rem; font-weight: 900;
+      color: rgba(0,0,0,0.5); pointer-events: none; position: absolute;
+    }
+    .flap-tl .flap-num { top:20%; left:22%; }
+    .flap-tr .flap-num { top:20%; right:22%; }
+    .flap-bl .flap-num { bottom:20%; left:22%; }
+    .flap-br .flap-num { bottom:20%; right:22%; }
+
+    .catcher-inner {
+      position: absolute; inset: 26%;
+      background: var(--inner-bg); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10; box-shadow: 0 2px 20px rgba(0,0,0,0.4);
+      border: 2px solid var(--border);
+    }
+    .inner-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); opacity: 0.6; }
+
+    /* fold animations (flat) */
+    @keyframes foldLR {
+      0%   { transform: scaleX(1); }
+      45%  { transform: scaleX(0.07); }
+      100% { transform: scaleX(1); }
+    }
+    @keyframes foldTB {
+      0%   { transform: scaleY(1); }
+      45%  { transform: scaleY(0.07); }
+      100% { transform: scaleY(1); }
+    }
+    .fold-lr { animation: foldLR var(--fold-dur, 0.3s) ease-in-out; }
+    .fold-tb { animation: foldTB var(--fold-dur, 0.3s) ease-in-out; }
+
+    .flap.selected-flap { filter: brightness(1.3); }
+
+    /* ── GAME PANEL ── */
+    .game-panel { width: 100%; background: var(--card); border: 1.5px solid var(--border); border-radius: 20px; padding: 18px; transition: background 0.35s, border-color 0.35s; }
+    .panel-title { font-size: 0.85rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px; text-align: center; }
+    .hint-text { font-size: 0.78rem; color: var(--subtext); text-align: center; margin-top: 8px; }
+    .slider-section { display: flex; flex-direction: column; gap: 10px; }
+    .slider-value-row { display: flex; align-items: center; justify-content: space-between; }
+    .slider-label { font-size: 0.82rem; color: var(--subtext); }
+    .slider-val { font-size: 2rem; font-weight: 900; color: var(--accent2); min-width: 48px; text-align: right; }
+    .range-input { width: 100%; height: 6px; -webkit-appearance: none; appearance: none; border-radius: 6px; background: var(--border); outline: none; cursor: pointer; }
+    .range-input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.4); transition: transform 0.15s; }
+    .range-input:active::-webkit-slider-thumb { transform: scale(1.2); }
+    .range-input::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); cursor: pointer; border: none; }
+    .btn-fold { width: 100%; padding: 13px; border-radius: 12px; border: none; background: linear-gradient(135deg, var(--catcher-c), var(--catcher-b)); color: #000; font-size: 0.95rem; font-weight: 800; letter-spacing: 1px; cursor: pointer; text-transform: uppercase; transition: opacity 0.2s, transform 0.15s; margin-top: 6px; }
+    .btn-fold:active { transform: scale(0.97); opacity: 0.85; }
+    .fold-progress { text-align: center; padding: 10px 0; }
+    .fold-count-display { font-size: 3.5rem; font-weight: 900; color: var(--accent2); line-height: 1; }
+    .fold-count-label { font-size: 0.82rem; color: var(--subtext); margin-top: 4px; }
+    .fold-dir-text { font-size: 0.78rem; color: var(--subtext); margin-top: 8px; }
+
+    /* ── POPUP ── */
+    .popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.78); display: flex; align-items: center; justify-content: center; z-index: 999; padding: 20px; animation: fadeIn 0.3s ease; }
+    .popup-card { background: var(--popup-bg); border: 1.5px solid var(--border); border-radius: 24px; padding: 28px 22px 22px; text-align: center; max-width: 340px; width: 100%; box-shadow: 0 12px 50px rgba(0,0,0,0.6); animation: popIn 0.45s cubic-bezier(.34,1.56,.64,1); }
+    .popup-slot-num { font-size: 0.7rem; font-weight: 700; letter-spacing: 2px; color: var(--subtext); text-transform: uppercase; margin-bottom: 8px; }
+    .popup-content { font-size: 1.25rem; font-weight: 700; color: var(--accent2); line-height: 1.4; margin-bottom: 18px; word-break: break-word; }
+    .popup-penalty-block { background: var(--penalty-card); border: 1.5px solid var(--penalty-border); border-radius: 14px; padding: 14px 16px; margin-bottom: 18px; text-align: center; }
+    .popup-penalty-label { font-size: 0.65rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--penalty-accent); margin-bottom: 8px; }
+    .popup-penalty-text { font-size: 1rem; font-weight: 700; color: var(--text); line-height: 1.4; }
+    .popup-btns { display: flex; flex-direction: column; gap: 10px; }
+    .btn-replay { padding: 12px; border-radius: 12px; border: none; background: linear-gradient(135deg, var(--catcher-c), var(--catcher-b)); color: #000; font-size: 0.9rem; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: opacity 0.2s, transform 0.15s; }
+    .btn-replay:active { transform: scale(0.97); opacity: 0.85; }
+    .btn-reset-hint { font-size: 0.72rem; color: var(--subtext); padding: 4px; }
+
+    .made-by { padding: 16px 0 24px; font-size: 0.72rem; font-weight: 600; letter-spacing: 2px; color: var(--subtext); text-transform: uppercase; opacity: 0.6; }
+
+    @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+    @keyframes popIn {
+      from { transform: scale(0.6) translateY(20px); opacity:0 }
+      to   { transform: scale(1)   translateY(0);    opacity:1 }
+    }
+  </style>
+</head>
+<body class="light">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="theme-toggle-wrap">
+    <span class="toggle-label" id="themeLabel">Açık</span>
+    <label class="toggle-switch" title="Tema">
+      <input type="checkbox" id="themeCheck" onchange="toggleTheme()" />
+      <div class="toggle-track"></div>
+      <div class="toggle-thumb"></div>
+    </label>
+  </div>
+  <div class="app-title">CASTER</div>
+  <div></div>
+</div>
+
+<!-- SETUP SCREEN -->
+<div class="screen active" id="setupScreen">
+  <div class="setup-intro">
+    <h2>Seçenekleri Belirle</h2>
+    <p>Tüm kutucukları doldur.<br>Başladıktan sonra değiştirilemez.</p>
+  </div>
+
+  <div class="section-heading">Seçenekler</div>
+  <div class="slots-grid" id="slotsGrid"></div>
+
+  <div class="penalty-section">
+    <div class="penalty-heading">Cezalar</div>
+    <p class="penalty-hint">Sonuçta rastgele bir ceza gösterilir. En az 1 ceza yaz.</p>
+    <div class="penalty-grid" id="penaltyGrid"></div>
+  </div>
+
+  <button class="btn-start" id="btnStart" onclick="startGame()" disabled>Oyunu Başlat</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div class="screen" id="gameScreen">
+  <div class="catcher-wrap" id="catcherWrap">
+    <div class="catcher" id="catcher">
+      <div class="flap flap-tl" id="flapTL" onclick="pickFlap(1)"><span class="flap-num">1</span></div>
+      <div class="flap flap-tr" id="flapTR" onclick="pickFlap(2)"><span class="flap-num">2</span></div>
+      <div class="flap flap-bl" id="flapBL" onclick="pickFlap(3)"><span class="flap-num">3</span></div>
+      <div class="flap flap-br" id="flapBR" onclick="pickFlap(4)"><span class="flap-num">4</span></div>
+      <div class="catcher-inner"><div class="inner-dot"></div></div>
+    </div>
+  </div>
+
+  <div class="game-panel">
+    <div id="panelContent"></div>
+  </div>
+
+  <div class="made-by">Made By akif</div>
+</div>
+
+<div class="made-by" id="setupFooter">Made By akif</div>
+
+<!-- POPUP -->
+<div class="popup-overlay" id="popupOverlay" style="display:none">
+  <div class="popup-card">
+    <div class="popup-slot-num" id="popupSlotNum"></div>
+    <div class="popup-content" id="popupContent"></div>
+    <div class="popup-penalty-block" id="popupPenaltyBlock" style="display:none">
+      <div class="popup-penalty-label">Ceza</div>
+      <div class="popup-penalty-text" id="popupPenaltyText"></div>
+    </div>
+    <div class="popup-btns">
+      <button class="btn-replay" onclick="replayGame()">Tekrar Oyna</button>
+      <div class="btn-reset-hint">Sıfırlamak için uygulamayı yeniden aç</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── GÖREV HAVUZU (150) ────────────────────────────────────────
+const TASK_POOL = [
+  "10 şınav çek","5 mekik çek","10 kere zıpla","20 defa etrafında dön",
+  "2 kere anır","Camdan dışarı bağır","Makyajını sil",
+  "30 saniye tek ayak üstünde dur","En sevdiğin şarkının nakaratını söyle",
+  "10 derin nefes al","Yere otur ve 10'a kadar say",
+  "Gözlerin kapalıyken 5 adım at","Ellerini 30 saniye yıka",
+  "Aynaya bakıp kendine güzel bir şey söyle","Odada 3 tur koş",
+  "5 kere dil döndürücü söyle","Çömelip 10 kere kalk","En aptal yüzünü yap",
+  "Bir dakika boyunca gülümse","10 kere 'merhaba' de",
+  "Sırt üstü yat ve bacaklarını kaldır","Hayvan sesi çıkar (sen seç)",
+  "Kollarını 20 kere çevir","Gözlerin kapalı 1 dakika otur",
+  "Yüksek sesle 1'den 20'ye say","Ellerin başında 10 saniye dur",
+  "Birinin fotoğrafını çek","En hızlı koşarak 3 adım at","5 kere öksür",
+  "Ağzına kalem koyarak bir şeyler söyle","10 kere diz bük",
+  "Arkadaşına taklit yap","Saçını dağıt ve öyle kal",
+  "En yüksek sesinle 3 saniye bağır","Yürürken gözlerin kapalı 5 adım at",
+  "Masaya 10 kere vur","Sağ elini sol kulağına değdir",
+  "Çıkardığın en tuhaf sesi çıkar","10 saniye boyunca donmuş gibi dur",
+  "Gülmeden ciddi bir yüz yap","5 kere 'süper' de","Oturduğun yerde zıpla",
+  "Omuzlarını 10 kere kaldır indir","Yanındakine yüksek sesle iltifat et",
+  "Bir şeyin ismini tersten söyle","10 kere göz kırp",
+  "Ayak parmaklarına dokun","Nefes tutma rekorunu kır",
+  "En iyi dansını yap (10 sn)","Dizlerini göğsüne çek",
+  "15 saniye boyunca koş yerinde","Baş parmağını 10 kere döndür",
+  "Gözlerin kapalı bir şey tahmin et","Ellerini çırp 15 kere",
+  "Nefesinle aynayı buğulandır","Yüzünü komik yap ve say to 5",
+  "Sol elinle adını yaz","3 kere 'teşekkürler' de",
+  "Burnunla nefes ver 10 kere","Yavaş çekimde 5 adım at",
+  "En uzun nefesini al","10 saniye güneş ışığına bak (varsa)",
+  "Başını 5 kere sağa sola çevir","Yüzüne soğuk su çarp",
+  "30 saniye gözlerini kapat","Boğazını temizle 3 kere",
+  "Kollarını yukarı kaldır ve uzan","En sevdiğin kelimeyi söyle",
+  "5 kere göz kırpıp bak","Parmaklarını çıtlat",
+  "Kahkaha at (zorla da olsa)","10 kere 'evet' de",
+  "Bir şeyi kafanda canlandır","Ellerini ovuştur 20 kere",
+  "Göbeğine bak 10 saniye","Saçına dokunmadan say to 10",
+  "Yavaşça geriye doğru eğil","Kulaklarını tut ve 5'e kadar say",
+  "Sağ elinle sol omzuna uzan","Dizlerini tut ve öne eğil",
+  "En uzun 'ahh' sesini çıkar","Başın üstünde el çırp 5 kere",
+  "Burun uçlarına dokun","Sıçrama yaparak ileri at",
+  "Gülümse ve 10 saniye bekle","Kendi adını 5 kere say",
+  "Parmak uçlarında 15 adım at","Ellerini masaya koy ve gözlerini kapat",
+  "Derin nefes al ve üf","Ayaklarını yere 10 kere vur",
+  "Başını öne eğip geriye at","5 kere 'bravo' de",
+  "Omuzlarını şrug yap 10 kere","Boşluğa yumruk at 5 kere",
+  "Sağ ayağını 10 kere salla","Sol ayakkabıyı çıkar ve tak",
+  "10 kere çift el çırp","Kulaklarını tıka ve 5'e kadar say",
+  "Gözlerini kırpıştır hızlıca","3 kere 'harika' de yüksek sesle",
+  "Başını 3 kere salla","Parmak uçlarına bas 10 saniye",
+  "Düz çizgide 5 adım yürü","Burnunu kaşı ve gülümse",
+  "Ellerini başının üstünde birleştir","Tek nefeste alfabeyi say",
+  "Boşlukta sekiz çiz elinle","15 kere parmak uçlarını tıklat",
+  "Hayali ip atla 20 kere","Yavaşça 3 adım geri git",
+  "10 saniye gökyüzüne bak","Ayaklarını 3 kere yere vur",
+  "Ellerini ceplerine koy ve çıkar","Gözlerin kapalı birini tanı",
+  "5 farklı hayvan sesi çıkar","Nefesini tut ve say to 8",
+  "En komik sesini çıkar","Boş bardağı taşır gibi yürü",
+  "Gözlerini kapat ve dinle","Hızlı hızlı 3 tur dön",
+  "Parmaklarınla ritim tut","10 kere 'olur' de",
+  "Başınla 'evet' ve 'hayır' işareti yap","Kollarını kanatlar gibi aç",
+  "Derin bir iç çekiş çek","En sevdiğin rengi yüksek sesle söyle",
+  "3 kere 'vay be' de","Dudaklarını büz 5 saniye",
+  "Gözlerin açık 10 saniye kıpırdama","Koltukaltını çiz sende",
+  "Omuzlarını indirip kaldır 5 kere","Bir sayı düşün ve söyle",
+  "Ellerin arkada 10 adım yürü","Burnun ucuna dokun gözlerin kapalı",
+  "Ellerini yukarı uzat ve esne","Yanındakini işaret et ve gül",
+  "10 kere 'hop' de","Tek bacakta 5 saniye dur",
+  "Gözlerin kapalı ellerini bul","Saçına bir kere dokunmadan yürü",
+  "5 kere 'woah' de","Yavaşça çömel ve kalk",
+  "Hızlı hızlı el sıkışır gibi yap","10 kere 'tamam' de",
+  "Gözlerini döndür 3 kere","Yüzünle bir harf yap",
+  "Kolları açık dönerek 5 adım at","Ellerini 5 saniye başının üstünde tut",
+  "Dilini çıkar ve say to 3","Burnunu çek ve bırak 5 kere",
+  "Sağ kulağına sol elinle dokunmaya çalış","Gözlerin kapalı 3 adım geri git",
+];
+
+// ── CEZA HAVUZU (50) ──────────────────────────────────────────
+const PENALTY_POOL = [
+  "Gruba yüksek sesle öz tanıtım yap",
+  "Birinin sesini taklit et, o tahmin etsin",
+  "30 saniye boyunca robot gibi konuş",
+  "Bir sonraki 3 cümleyi şarkı söyleyerek söyle",
+  "Güldüğünde çıkardığın sesi taklit et",
+  "Hayali birine kısa bir konuşma yap",
+  "Yüzünü bez yap 10 saniye ve herkes izlesin",
+  "En saçma soru sor",
+  "Biriyle el ele tutuşup dans et (5 sn)",
+  "Gruba teşekkür konuşması yap",
+  "Yavaş çekimde su iç",
+  "Alkışlar eşliğinde 3 adım at",
+  "Bir reklam cıngılı söyle",
+  "Gruba kısa bir şiir oku (uydurma da olur)",
+  "Telefon rehberindeki ilk isme mesaj at",
+  "Komşu odaya gidip 'merhaba' de ve dön",
+  "Gözlerin kapalı birine sarıl",
+  "Kendinle selfie çek ve ekrana göster",
+  "Gruba kısa bir hava durumu tahmini sun",
+  "El kaldırıp 'ben!' diye bağır",
+  "30 saniyelik özür konuşması yap (her şeyden)",
+  "Birinin saçını övmek zorunda kal",
+  "Yüzünü ciddiye alarak komik bir şey anlat",
+  "Bir ürün için reklam yap (herhangi bir ürün)",
+  "Masadaki bir şeyin güzelliğini anlat",
+  "Gruba bir atasözü söyle ve açıkla",
+  "Telefon numaranın son rakamına göre şınav çek",
+  "Bir sonraki cümleyi fısıldayarak söyle",
+  "Gruba bugünün menüsünü sun (yemek yoksa uydur)",
+  "Birinin ayakkabısını öv",
+  "Gözlerin kapalı bir şey anlat",
+  "Hayali bir enstrüman çal 10 saniye",
+  "Komik bir dans hareketi göster",
+  "En sevdiğin filmi 3 kelimeyle anlat",
+  "Birine çok resmi bir şekilde selam ver",
+  "Sesi kısık bir sesinle bir şey söyle",
+  "Gruba bugünün özeti raporu sun",
+  "30 saniye boyunca kaşlarını oynayarak konuş",
+  "Bir hayvanın bakış açısından 3 cümle söyle",
+  "Birinin adını 3 farklı tonlamayla söyle",
+  "Hayali bir röportajda kendinle konuş",
+  "Odadaki bir eşyayı sat (hayali de olsa)",
+  "Bir sonraki 2 cümleyi İngilizce söyle",
+  "Gruba geceyi anlatan kısa bir hikaye anlat",
+  "Komik bir yürüyüş tarzı icat et ve göster",
+  "Birini 10 saniye boyunca abartılı şekilde öv",
+  "Ağır çekimde bir şeyi al ve bırak",
+  "Gruba bir slogan icat et (tema: dostluk)",
+  "Yanındakine çok ciddi bir bakış at, 5 sn bekle",
+  "Sesini değiştirerek 'günaydın' de",
+];
+
+// ── STATE ─────────────────────────────────────────────────────
+let slots = new Array(8).fill('');
+let penalties = [];
+let selectedFlap = null;
+let foldTarget = 10;
+let isAnimating = false;
+let audioCtx = null;
+
+// ── HAVUZDAN N BENZERSIZ AL ───────────────────────────────────
+function pickRandom(pool, n) {
+  const copy = [...pool];
+  const picks = [];
+  while (picks.length < n && copy.length > 0) {
+    picks.push(copy.splice(Math.floor(Math.random() * copy.length), 1)[0]);
+  }
+  return picks;
+}
+
+// öneri tıklandığında inputu doldur
+function applyHint(inputId, text) {
+  const el = document.getElementById(inputId);
+  if (!el || el.disabled) return;
+  el.value = text;
+  el.focus();
+  checkReady();
+}
+
+// ── THEME ─────────────────────────────────────────────────────
+function toggleTheme() {
+  const isDark = document.getElementById('themeCheck').checked;
+  document.body.className = isDark ? 'dark' : 'light';
+  document.getElementById('themeLabel').textContent = isDark ? 'Koyu' : 'Açık';
+  document.getElementById('metaTheme').content = isDark ? '#000000' : '#0f172a';
+}
+
+// ── AUDIO ─────────────────────────────────────────────────────
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playFoldSound() {
+  try {
+    ensureAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const dur = 0.1;
+    const bufLen = Math.floor(audioCtx.sampleRate * dur);
+    const buf = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) {
+      const t = i / bufLen;
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.2) * Math.min(t * 35, 1);
+    }
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 1100;
+    filter.Q.value = 0.8;
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.16, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    src.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+    src.start(); src.stop(audioCtx.currentTime + dur);
+  } catch(e) {}
+}
+
+function vibe(ms) {
+  try { if (navigator.vibrate) navigator.vibrate(ms); } catch(e) {}
+}
+
+// ── SETUP ─────────────────────────────────────────────────────
+function buildSetupGrid() {
+  const slotHints    = pickRandom(TASK_POOL,    8);
+  const penaltyHints = pickRandom(PENALTY_POOL, 2);
+
+  const grid = document.getElementById('slotsGrid');
+  grid.innerHTML = '';
+  for (let i = 1; i <= 8; i++) {
+    const hint = slotHints[i - 1];
+    const safeHint = hint.replace(/'/g, "\\'");
+    const item = document.createElement('div');
+    item.className = 'slot-item';
+    item.innerHTML = `
+      <div class="slot-label">SLOT ${i}</div>
+      <input class="slot-input" id="slot${i}" type="text"
+        placeholder="${hint}" maxlength="60" oninput="checkReady()" />
+      <div class="suggest-hint" onclick="applyHint('slot${i}','${safeHint}')"
+           title="Öneriyi kullanmak için dokun">
+        Öneri: <span>${hint}</span>
+      </div>
+    `;
+    grid.appendChild(item);
+  }
+
+  const pg = document.getElementById('penaltyGrid');
+  pg.innerHTML = '';
+  for (let i = 1; i <= 2; i++) {
+    const hint = penaltyHints[i - 1];
+    const safeHint = hint.replace(/'/g, "\\'");
+    const item = document.createElement('div');
+    item.className = 'slot-item';
+    item.innerHTML = `
+      <div class="penalty-label">CEZA ${i}</div>
+      <input class="penalty-input" id="penalty${i}" type="text"
+        placeholder="${hint}" maxlength="60" oninput="checkReady()" />
+      <div class="suggest-hint penalty-suggest"
+           onclick="applyHint('penalty${i}','${safeHint}')"
+           title="Öneriyi kullanmak için dokun">
+        Öneri: <span>${hint}</span>
+      </div>
+    `;
+    pg.appendChild(item);
+  }
+}
+
+function checkReady() {
+  const slotsOk = Array.from({length:8}, (_,i) =>
+    document.getElementById('slot'+(i+1))).every(el => el.value.trim() !== '');
+  const penaltyOk = [1,2].some(i =>
+    document.getElementById('penalty'+i).value.trim() !== '');
+  document.getElementById('btnStart').disabled = !(slotsOk && penaltyOk);
+}
+
+function startGame() {
+  for (let i = 1; i <= 8; i++) {
+    slots[i-1] = document.getElementById('slot'+i).value.trim();
+    document.getElementById('slot'+i).disabled = true;
+  }
+  penalties = [];
+  for (let i = 1; i <= 2; i++) {
+    const v = document.getElementById('penalty'+i).value.trim();
+    if (v) penalties.push(v);
+    document.getElementById('penalty'+i).disabled = true;
+  }
+  document.getElementById('btnStart').disabled = true;
+
+  vibe([30, 50, 30]);
+  document.getElementById('setupScreen').classList.remove('active');
+  document.getElementById('setupFooter').style.display = 'none';
+  document.getElementById('gameScreen').classList.add('active');
+  renderPickFlap();
+}
+
+// ── GAME ──────────────────────────────────────────────────────
+function renderPickFlap() {
+  selectedFlap = null;
+  clearFlapHighlight();
+  document.getElementById('panelContent').innerHTML = `
+    <div class="panel-title">Bir köşe seç</div>
+    <p class="hint-text">1, 2, 3 veya 4'e dokun</p>
+  `;
+}
+
+function pickFlap(n) {
+  if (isAnimating) return;
+  vibe(15);
+  selectedFlap = n;
+  clearFlapHighlight();
+  document.getElementById('flap'+['TL','TR','BL','BR'][n-1]).classList.add('selected-flap');
+  renderSlider();
+}
+
+function clearFlapHighlight() {
+  ['TL','TR','BL','BR'].forEach(s =>
+    document.getElementById('flap'+s).classList.remove('selected-flap'));
+}
+
+function renderSlider() {
+  document.getElementById('panelContent').innerHTML = `
+    <div class="panel-title">Kaç kez katlansın?</div>
+    <div class="slider-section">
+      <div class="slider-value-row">
+        <span class="slider-label">Katlama sayısı</span>
+        <span class="slider-val" id="sliderVal">${foldTarget}</span>
+      </div>
+      <input class="range-input" type="range" min="1" max="100"
+        value="${foldTarget}" id="foldSlider"
+        oninput="onSliderChange(this.value)"
+        ontouchstart="ensureAudio()" />
+      <button class="btn-fold" onclick="startFold()">KATLA!</button>
+    </div>
+  `;
+}
+
+function onSliderChange(v) {
+  foldTarget = parseInt(v);
+  document.getElementById('sliderVal').textContent = v;
+}
+
+function startFold() {
+  if (isAnimating) return;
+  isAnimating = true;
+  vibe([20, 30, 20]);
+
+  const total = foldTarget;
+  let done = 0;
+  const dur = Math.max(85, Math.min(340, 370 - total * 2.5));
+  const catcher = document.getElementById('catcher');
+  catcher.style.setProperty('--fold-dur', (dur/1000)+'s');
+
+  document.getElementById('panelContent').innerHTML = `
+    <div class="panel-title">Katlanıyor...</div>
+    <div class="fold-progress">
+      <div class="fold-count-display" id="foldCountDisp">${total}</div>
+      <div class="fold-count-label">katlama kaldı</div>
+      <div class="fold-dir-text" id="foldDirText">↔ Yatay</div>
+    </div>
+  `;
+
+  function step() {
+    if (done >= total) { isAnimating = false; showResult(); return; }
+    done++;
+    const rem = total - done;
+    const isLR = done % 2 === 1;
+    const cls = isLR ? 'fold-lr' : 'fold-tb';
+
+    const disp = document.getElementById('foldCountDisp');
+    const dir  = document.getElementById('foldDirText');
+    if (disp) disp.textContent = rem;
+    if (dir)  dir.textContent  = isLR ? '↔ Yatay' : '↕ Dikey';
+
+    catcher.classList.remove('fold-lr', 'fold-tb');
+    void catcher.offsetWidth;
+    catcher.classList.add(cls);
+
+    playFoldSound();
+    vibe(8);
+    setTimeout(step, dur);
+  }
+  step();
+}
+
+function showResult() {
+  const idx = ((selectedFlap - 1) + foldTarget) % 8;
+  const content = slots[idx];
+  const penalty = penalties.length
+    ? penalties[Math.floor(Math.random() * penalties.length)]
+    : null;
+
+  vibe([40, 60, 100]);
+
+  document.getElementById('popupSlotNum').textContent = `SLOT ${idx + 1}`;
+  document.getElementById('popupContent').textContent = content;
+
+  const pBlock = document.getElementById('popupPenaltyBlock');
+  const pText  = document.getElementById('popupPenaltyText');
+  if (penalty) { pText.textContent = penalty; pBlock.style.display = 'block'; }
+  else          { pBlock.style.display = 'none'; }
+
+  document.getElementById('popupOverlay').style.display = 'flex';
+}
+
+function replayGame() {
+  document.getElementById('popupOverlay').style.display = 'none';
+  const catcher = document.getElementById('catcher');
+  catcher.classList.remove('fold-lr', 'fold-tb');
+  vibe(20);
+  renderPickFlap();
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+buildSetupGrid();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
